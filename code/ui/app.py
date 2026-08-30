@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from code.bootstrap import ensure_corpus
 from code.embedding.embed import embed_query, load_model, model_dimension
 from code.ingest.allowlist import FUNDS, fund_keys
 from code.retrieval.retrieve import RetrievalResult, retrieve
@@ -138,6 +139,17 @@ def _render(result: RetrievalResult) -> None:
 
 
 def main() -> None:
+    with st.spinner("Preparing the corpus (first boot builds it)…"):
+        try:
+            ensure_corpus()
+        except Exception as exc:  # noqa: BLE001
+            st.error(
+                "Could not build the retrieval corpus. "
+                f"Cause: {exc}\n\nIf this is a fresh clone, commit "
+                "`data/raw/extracted/*.json` (Phase 1) before deploying."
+            )
+            st.stop()
+
     try:
         dim = model_dimension(_model())
     except Exception as exc:  # noqa: BLE001
@@ -146,11 +158,7 @@ def main() -> None:
     try:
         _collection().count()
     except Exception as exc:  # noqa: BLE001
-        st.error(
-            f"Vector store not found ({exc}). Run the pipeline first:\n\n"
-            "```bash\npython -m code.chunking.run && "
-            "python -m code.embedding.run && python -m code.vector_store.run\n```"
-        )
+        st.error(f"Vector store unavailable: {exc}")
         st.stop()
 
     st.markdown('<div class="app-title">HDFC Fund FAQ Assistant</div>', unsafe_allow_html=True)

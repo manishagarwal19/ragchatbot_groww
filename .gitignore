@@ -7,10 +7,13 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 
-# Pipeline artifacts — keep directories, ignore contents
+# Pipeline artifacts — keep directories, ignore contents.
+# data/raw/extracted/*.json are committed so a fresh clone can rebuild
+# chunks/embeddings/vector store on boot (deploy bootstrap).
 data/raw/html/**
 !data/raw/html/.gitkeep
 data/raw/extracted/**
+!data/raw/extracted/*.json
 !data/raw/extracted/.gitkeep
 data/chunks/**
 !data/chunks/.gitkeep
