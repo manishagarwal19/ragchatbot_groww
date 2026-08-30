@@ -6,6 +6,16 @@ Run from repo root:
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# `streamlit run` is a console script, so sys.path[0] is the venv bin dir and
+# bare `import code.*` would resolve to the stdlib `code` module. Put the repo
+# root back on the path so the `code` package is found in any launch mode.
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import streamlit as st
 
 from code.bootstrap import ensure_corpus
