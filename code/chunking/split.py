@@ -68,6 +68,35 @@ _BOILERPLATE_LINE = re.compile(
     r"home|version:|© )",
 )
 
+# Groww "best funds" / suggested-funds carousels — link labels, not fund facts.
+_BEST_LABEL = re.compile(r"(?i)^(?:best|top)\b.*\bmutual funds?$")
+
+# Other-AMC fund rows from Groww "popular/similar fund" widgets. Not the outer
+# URL window itself (we drop these as part of that window's text), so removing
+# them keeps the corpus restricted to the five allowlisted HDFC pages. Matches
+# only when the AMC is directly succeeded by a fund title (no comma/period —
+# a manager bio like "worked with Motilal Oswal Financial Services Ltd., …"
+# is therefore kept).
+_OTHER_AMC_NAMES = (
+    "parag parikh", "ppfas", "sbi", "axis", "icici", "kotak", "franklin",
+    "templeton", "mirae", "nippon", "aditya birla", "birla sun", "uti",
+    "quant", "motilal", "pgim", "dsp", "canara", "mahindra", "bandhan",
+    "navi", "edelweiss", "baroda", "lic", "hsbc", "jupiter", "360 one",
+    "invezta", "whiteoak", "union mutual",
+    "hdfc mid cap", "hdfc multi cap", "hdfc focused", "hdfc index",
+    "hdfc banking", "hdfc infrastructure", "hdfc pharma", "hdfc healthcare",
+    "hdfc defence", "hdfc technology", "hdfc consumption", "hdfc dividend yield",
+    "hdfc value", "hdfc retirement", "hdfc children", "hdfc arbitrage",
+    "hdfc liquid", "hdfc money market", "hdfc short term", "hdfc ultra short",
+    "hdfc corporate bond", "hdfc credit risk", "hdfc gilt", "hdfc floater",
+    "hdfc dynamic", "hdfc equity savings", "hdfc multi asset",
+    "hdfc capital builder", "hdfc balanced", "hdfc hybrid equity",
+)
+_OTHER_FUND_LINE = re.compile(
+    r"(?i)\b(?:%s)\b(?=[^,.;\n]{0,80}\b[A-Z][A-Za-z' &-]{0,40}\bfund\b)"
+    % "|".join(re.escape(n) for n in _OTHER_AMC_NAMES)
+)
+
 _HOLDINGS_BLOCK = re.compile(
     r"Holdings\s*\(\s*\d+\s*\).*?(?=Minimum investments|Understand terms|About\s|$)",
     re.DOTALL | re.IGNORECASE,
@@ -138,7 +167,12 @@ def _strip_visible_chrome(visible: str, hero: str) -> str:
     kept: List[str] = []
     for raw in body.splitlines():
         line = raw.strip()
-        if not line or _BOILERPLATE_LINE.match(line):
+        if (
+            not line
+            or _BOILERPLATE_LINE.match(line)
+            or _BEST_LABEL.match(line)
+            or _OTHER_FUND_LINE.search(line)
+        ):
             continue
         kept.append(line)
     return "\n".join(kept).strip()

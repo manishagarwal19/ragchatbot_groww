@@ -43,12 +43,14 @@ _FUND_ALIASES = {
     ),
 }
 
-# AMCs that are never in the five-URL corpus.
+# AMCs that are never in the five-URL corpus. Common misspellings/forms are
+# included so a stray typo doesn't fall through to retrieval.
 _OTHER_AMCS = (
     "sbi", "axis", "icici", "kotak", "franklin", "templeton", "mirae", "nippon",
-    "aditya birla", "birla sun", "uti", "parag parikh", "quant", "motilal", "pgim",
-    "dsp", "canara", "mahindra", "bandhan", "navi", "edelweiss", "baroda", "lic",
-    "hsbc", "jupiter", "360 one", "invezta", "whiteoak", "union mutual",
+    "aditya birla", "birla sun", "uti", "parag parikh", "parag parekh",
+    "parekh", "ppfas", "quant", "motilal", "pgim", "dsp", "canara",
+    "mahindra", "bandhan", "navi", "edelweiss", "baroda", "lic", "hsbc",
+    "jupiter", "360 one", "invezta", "whiteoak", "union mutual",
 )
 
 # HDFC funds that are NOT part of the five-URL corpus.
@@ -60,7 +62,7 @@ _HDFC_NON_CORPUS = (
     "hdfc liquid", "hdfc money market", "hdfc short term", "hdfc ultra short",
     "hdfc corporate bond", "hdfc credit risk", "hdfc gilt", "hdfc floater",
     "hdfc dynamic", "hdfc equity savings", "hdfc multi asset", "hdfc multiple yield",
-    "hdfc capital builder", "hdfc balanced", "hdfc hybrid equity", "hdfc step one",
+    "hdfc capital builder", "hdfc balanced fund", "hdfc hybrid equity", "hdfc step one",
 )
 
 _PII_EXTRA = (
@@ -138,10 +140,9 @@ def classify_question(question: str) -> GuardResult:
             reason="returns computation is out of scope",
         )
 
-    named = _named_funds(question)
-    if named:
-        return GuardResult(status="ok", named_funds=sorted(set(named), key=_fund_order))
-
+    # Out-of-corpus detection runs before alias matching so that an explicit
+    # mention of a non-corpus fund is never captured by a loose alias such as
+    # "flexi cap fund direct growth".
     lowered = question.lower()
     for hint in _HDFC_NON_CORPUS:
         if hint in lowered:
@@ -149,5 +150,9 @@ def classify_question(question: str) -> GuardResult:
     for amc in _OTHER_AMCS:
         if amc in lowered:
             return GuardResult(status="out_of_corpus", out_of_corpus_hint=amc, reason=f"{amc} not in corpus")
+
+    named = _named_funds(question)
+    if named:
+        return GuardResult(status="ok", named_funds=sorted(set(named), key=_fund_order))
 
     return GuardResult(status="ok")

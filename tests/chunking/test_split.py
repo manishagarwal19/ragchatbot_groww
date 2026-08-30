@@ -90,6 +90,32 @@ class ChunkingTests(unittest.TestCase):
             )
             self.assertEqual(chunk["ingested_at"], "2026-08-30T06:23:21+00:00")
 
+    def test_drops_other_amc_fund_names_but_keeps_manager_bio(self) -> None:
+        carousel = (
+            "Best ELSS Mutual funds\n"
+            "Best Value Oriented Mutual funds\n"
+            "Parag Parikh Flexi Cap Fund\n"
+            "SBI Small Cap Fund Direct Growth\n"
+            "ICICI Prudential Large Cap Fund Direct Growth\n"
+            "HDFC Mid Cap Opportunities Fund\n"
+            "Motilal Oswal Nifty India Defence Index Fund\n"
+            "Prior to joining HDFC MF, he has worked with Motilal Oswal "
+            "Financial Services Ltd., Goldman Sachs, CRISIL Global Research "
+            "& Analytics and Deloitte Haskins & Sells.\n"
+        )
+        chunks = chunk_document(_doc("large_cap", extra_visible=carousel))
+        joined = "\n".join(c["text"] for c in chunks)
+        for forbidden in (
+            "Parag Parikh",
+            "SBI Small Cap Fund",
+            "ICICI Prudential",
+            "HDFC Mid Cap Opportunities",
+            "Motilal Oswal Nifty India Defence",
+            "Best ELSS Mutual funds",
+        ):
+            self.assertNotIn(forbidden, joined)
+        self.assertIn("worked with Motilal Oswal Financial Services Ltd.,", joined)
+
     def test_rejects_off_allowlist_url(self) -> None:
         doc = _doc("large_cap")
         doc["url"] = "https://groww.in/mutual-funds/other"

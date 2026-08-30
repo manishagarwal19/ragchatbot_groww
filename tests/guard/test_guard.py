@@ -44,6 +44,15 @@ class RefusalTests(unittest.TestCase):
         self.assertEqual(classify_question("HDFC Mid Cap Fund?").status, "out_of_corpus")
         self.assertEqual(classify_question("Axis ELSS?").status, "out_of_corpus")
 
+    def test_out_of_corpus_misspellings_refused(self) -> None:
+        for q in (
+            "What is the expense ratio of Parag Parikh Flexi Cap Fund?",
+            "What is the expense ratio of Parag Parekh Flexi Cap Fund?",
+            "Parag Parekh Flexi Cap Fund Direct Growth?",
+            "PPFAS Flexi Cap?",
+        ):
+            self.assertEqual(classify_question(q).status, "out_of_corpus", q)
+
 
 if __name__ == "__main__":
     unittest.main()
