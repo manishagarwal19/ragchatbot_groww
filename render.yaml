@@ -2,7 +2,7 @@ services:
   - type: web
     name: ragchatbot-groww
     runtime: python
-    plan: starter
+    plan: standard
     buildCommand: pip install -r requirements.txt
     startCommand: python -m streamlit run code/ui/app.py --server.port $PORT --server.address 0.0.0.0
     envVars:
